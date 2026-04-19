@@ -3,6 +3,31 @@
   let buttonInjected = false;
   let overlayOpen = false;
 
+  function apiFetch(url, options) {
+    return new Promise((resolve, reject) => {
+      chrome.runtime.sendMessage(
+        { type: "fetch", url, options },
+        (response) => {
+          if (!response) return reject(new Error("No response from background"));
+          if (!response.ok) {
+            try {
+              const err = JSON.parse(response.body);
+              reject(new Error(err.error || `HTTP ${response.status}`));
+            } catch {
+              reject(new Error(response.body || `HTTP ${response.status}`));
+            }
+          } else {
+            try {
+              resolve(JSON.parse(response.body));
+            } catch {
+              reject(new Error("Invalid JSON"));
+            }
+          }
+        }
+      );
+    });
+  }
+
   function createButton() {
     if (buttonInjected) return;
     const titleContainer =
@@ -143,13 +168,11 @@
     const url = window.location.href;
 
     try {
-      const res = await fetch(`${SERVER}/api/info`, {
+      const data = await apiFetch(`${SERVER}/api/info`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ url }),
       });
-      const data = await res.json();
-      if (!res.ok) throw new Error(data.error || "Failed to fetch video info");
 
       let mode = initialMode || "video";
       let downloading = false;
@@ -254,49 +277,63 @@
         spd.textContent = "";
 
         try {
-          const res = await fetch(`${SERVER}/api/download`, {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({
-              url: videoUrl,
-              formatId,
-              ...(audioFormat ? { audioFormat } : {}),
-            }),
+          const res = await new Promise((resolve, reject) => {
+            chrome.runtime.sendMessage(
+              {
+                type: "fetch",
+                url: `${SERVER}/api/download`,
+                options: {
+                  method: "POST",
+                  headers: { "Content-Type": "application/json" },
+                  body: JSON.stringify({
+                    url: videoUrl,
+                    formatId,
+                    ...(audioFormat ? { audioFormat } : {}),
+                  }),
+                },
+              },
+              (response) => {
+                if (!response) return reject(new Error("No response"));
+                resolve(response);
+              }
+            );
           });
 
-          const reader = res.body.getReader();
-          const decoder = new TextDecoder();
-          let buffer = "";
+          if (!res.ok) {
+            try {
+              const err = JSON.parse(res.body);
+              throw new Error(err.error || "Download failed");
+            } catch (e) {
+              if (e.message !== "Download failed" && !e.message.includes("Download failed")) throw e;
+              throw new Error(res.body || "Download failed");
+            }
+          }
+
+          const text = res.body;
+          const lines = text.split("\n");
           let filename = null;
+          let lastPercent = 0;
 
-          while (true) {
-            const { done, value } = await reader.read();
-            if (done) break;
-
-            buffer += decoder.decode(value, { stream: true });
-            const lines = buffer.split("\n");
-            buffer = lines.pop() || "";
-
-            for (const line of lines) {
-              if (line.startsWith("data: ")) {
-                try {
-                  const d = JSON.parse(line.slice(6));
-                  if (d.percent !== undefined) {
-                    fill.style.width = `${d.percent}%`;
-                    pct.textContent = `${Math.round(d.percent)}%`;
-                    if (d.speed) spd.textContent = d.speed;
-                  }
-                } catch {}
-              }
-              if (line.startsWith("event: done")) {
-                const idx = lines.indexOf(line);
-                const next = lines[idx + 1];
-                if (next && next.startsWith("data: ")) {
-                  try {
-                    const d = JSON.parse(next.slice(6));
-                    filename = d.filename;
-                  } catch {}
+          for (let i = 0; i < lines.length; i++) {
+            const line = lines[i];
+            if (line.startsWith("data: ")) {
+              try {
+                const d = JSON.parse(line.slice(6));
+                if (d.percent !== undefined) {
+                  lastPercent = d.percent;
+                  fill.style.width = `${d.percent}%`;
+                  pct.textContent = `${Math.round(d.percent)}%`;
+                  if (d.speed) spd.textContent = d.speed;
                 }
+              } catch {}
+            }
+            if (line.startsWith("event: done")) {
+              const next = lines[i + 1];
+              if (next && next.startsWith("data: ")) {
+                try {
+                  const d = JSON.parse(next.slice(6));
+                  filename = d.filename;
+                } catch {}
               }
             }
           }
@@ -306,10 +343,28 @@
             pct.textContent = "100%";
             spd.textContent = "Saving...";
 
-            const fileRes = await fetch(`${SERVER}/api/file?file=${encodeURIComponent(filename)}`);
+            const fileRes = await new Promise((resolve, reject) => {
+              chrome.runtime.sendMessage(
+                {
+                  type: "fetch",
+                  url: `${SERVER}/api/file?file=${encodeURIComponent(filename)}`,
+                  options: {},
+                },
+                (response) => {
+                  if (!response) return reject(new Error("No response"));
+                  resolve(response);
+                }
+              );
+            });
+
             if (!fileRes.ok) throw new Error("File download failed");
 
-            const blob = await fileRes.blob();
+            const byteChars = atob(fileRes.body);
+            const byteArray = new Uint8Array(byteChars.length);
+            for (let i = 0; i < byteChars.length; i++) {
+              byteArray[i] = byteChars.charCodeAt(i);
+            }
+            const blob = new Blob([byteArray]);
             const a = document.createElement("a");
             a.href = URL.createObjectURL(blob);
             a.download = filename;
