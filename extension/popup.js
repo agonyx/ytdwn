@@ -25,12 +25,16 @@
   const toggleOptions = $("#toggle-options");
   const toggleLabel = $("#toggle-label");
   const toggleChevron = $("#toggle-chevron");
+  const analysisSection = $("#analysis-section");
+  const analyzeBtn = $("#analyze-btn");
 
   let videoUrl = null;
   let videoData = null;
   let currentMode = "video";
   let downloading = false;
   let showAll = false;
+  let analyzing = false;
+  let analysisData = null;
 
   function setStatus(status, text) {
     statusBar.dataset.status = status;
@@ -206,6 +210,12 @@
 
     updateSmartButton();
 
+    if (!downloading && !analyzing) {
+      show(analysisSection);
+    } else {
+      hide(analysisSection);
+    }
+
     if (showAll && !downloading) {
       show(formatsList);
     } else {
@@ -224,6 +234,7 @@
   async function fetchInfo(url) {
     hide(errorSection);
     hide(videoSection);
+    hide(analysisSection);
     hide(smartDownload);
     hide(toggleOptions);
     hide(formatsList);
@@ -256,7 +267,9 @@
       }
 
       renderFormats();
+      analysisData = null;
       updateUI();
+      renderAnalysis();
     } catch (err) {
       hide(loadingSection);
       errorMsg.textContent = err.message;
@@ -347,6 +360,110 @@
       downloading = false;
       smartBtn.disabled = false;
     }
+  }
+
+  analyzeBtn.addEventListener("click", async () => {
+    if (!videoUrl || analyzing) return;
+    analyzing = true;
+    analysisData = null;
+    renderAnalysis();
+
+    try {
+      const res = await fetch(`${SERVER}/api/analyze`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ url: videoUrl }),
+      });
+
+      const reader = res.body.getReader();
+      const decoder = new TextDecoder();
+      let buffer = "";
+
+      while (true) {
+        const { done, value } = await reader.read();
+        if (done) break;
+
+        buffer += decoder.decode(value, { stream: true });
+        const lines = buffer.split("\n");
+        buffer = lines.pop() || "";
+
+        for (const line of lines) {
+          if (line.startsWith("event: done")) {
+            const idx = lines.indexOf(line);
+            const nextLine = lines[idx + 1];
+            if (nextLine && nextLine.startsWith("data: ")) {
+              try {
+                analysisData = JSON.parse(nextLine.slice(6));
+              } catch {}
+            }
+          }
+          if (line.startsWith("event: error")) {
+            const idx = lines.indexOf(line);
+            const nextLine = lines[idx + 1];
+            if (nextLine && nextLine.startsWith("data: ")) {
+              try {
+                const data = JSON.parse(nextLine.slice(6));
+                analysisData = { error: data.error };
+              } catch {}
+            }
+          }
+        }
+      }
+    } catch (err) {
+      analysisData = { error: err.message };
+    } finally {
+      analyzing = false;
+      renderAnalysis();
+    }
+  });
+
+  function renderAnalysis() {
+    if (!videoData) return;
+
+    if (analyzing) {
+      analyzeBtn.disabled = true;
+      analyzeBtn.innerHTML = `<span class="spinner" style="width:14px;height:14px;border-width:1.5px;border-top-color:#ff1a3d;"></span> Analyzing...`;
+      analyzeBtn.classList.add("analyzing");
+      return;
+    }
+
+    if (analysisData && !analysisData.error) {
+      analysisSection.innerHTML = `
+        <div class="analysis-results">
+          <div class="analysis-item">
+            <span class="analysis-label">BPM</span>
+            <span class="analysis-value bpm">${analysisData.bpm}</span>
+            ${analysisData.bpmConfidence > 0 ? `<span class="analysis-confidence">${Math.round(analysisData.bpmConfidence * 100)}%</span>` : ""}
+          </div>
+          <div class="analysis-divider"></div>
+          <div class="analysis-item">
+            <span class="analysis-label">Key</span>
+            <span class="analysis-value key">${analysisData.key} ${analysisData.scale}</span>
+            ${analysisData.keyStrength > 0 ? `<span class="analysis-confidence">${Math.round(analysisData.keyStrength * 100)}%</span>` : ""}
+          </div>
+        </div>`;
+      return;
+    }
+
+    if (analysisData && analysisData.error) {
+      analysisSection.innerHTML = `
+        <div class="analysis-error">
+          <span>${analysisData.error}</span>
+          <button class="analyze-btn retry" id="analyze-retry">Retry</button>
+        </div>`;
+      $("#analyze-retry").addEventListener("click", () => analyzeBtn.click());
+      return;
+    }
+
+    analyzeBtn.disabled = false;
+    analyzeBtn.innerHTML = `
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+        <path d="M9 18V5l12-2v13"/>
+        <circle cx="6" cy="18" r="3"/>
+        <circle cx="18" cy="16" r="3"/>
+      </svg>
+      Analyze BPM & Key`;
+    analyzeBtn.classList.remove("analyzing");
   }
 
   smartBtn.addEventListener("click", () => {

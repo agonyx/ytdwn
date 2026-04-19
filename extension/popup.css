@@ -170,6 +170,129 @@ body {
   margin-bottom: 8px;
 }
 
+.analysis-section {
+  margin-bottom: 8px;
+}
+
+.analysis-results {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 16px;
+  padding: 10px 14px;
+  background: rgba(255, 255, 255, 0.02);
+  border: 1px solid rgba(255, 255, 255, 0.06);
+  border-radius: 8px;
+}
+
+.analysis-item {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 2px;
+}
+
+.analysis-label {
+  font-size: 0.6rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 1.5px;
+  color: #555;
+}
+
+.analysis-value {
+  font-size: 1.15rem;
+  font-weight: 800;
+  font-variant-numeric: tabular-nums;
+}
+
+.analysis-value.bpm {
+  color: #ff4d6a;
+}
+
+.analysis-value.key {
+  color: #50b4ff;
+}
+
+.analysis-confidence {
+  font-size: 0.6rem;
+  color: #444;
+  font-variant-numeric: tabular-nums;
+}
+
+.analysis-divider {
+  width: 1px;
+  height: 32px;
+  background: rgba(255, 255, 255, 0.06);
+}
+
+.analyze-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  width: 100%;
+  padding: 7px;
+  background: rgba(255, 255, 255, 0.02);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 8px;
+  color: #777;
+  font-size: 0.75rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.25s;
+}
+
+.analyze-btn svg {
+  width: 14px;
+  height: 14px;
+}
+
+.analyze-btn:hover:not(:disabled) {
+  background: rgba(255, 255, 255, 0.04);
+  border-color: rgba(255, 255, 255, 0.15);
+  color: #b0b0b0;
+}
+
+.analyze-btn:disabled {
+  cursor: wait;
+  color: #555;
+}
+
+.analyze-btn.retry {
+  width: auto;
+  padding: 3px 10px;
+  font-size: 0.7rem;
+  border-color: rgba(255, 26, 61, 0.2);
+  color: #ff6b7a;
+  flex-shrink: 0;
+}
+
+.analyze-btn.retry:hover {
+  background: rgba(255, 26, 61, 0.06);
+  color: #ff8a9a;
+}
+
+.analysis-error {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  padding: 8px 10px;
+  background: rgba(255, 26, 61, 0.04);
+  border: 1px solid rgba(255, 26, 61, 0.1);
+  border-radius: 8px;
+  font-size: 0.7rem;
+  color: #ff6b7a;
+}
+
+.analysis-error span {
+  flex: 1;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
 .mode-btn {
   flex: 1;
   display: flex;
