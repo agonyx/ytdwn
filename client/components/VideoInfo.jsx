@@ -1,7 +1,7 @@
 import { useState } from "react";
 import FormatTable from "./FormatTable";
 
-export default function VideoInfo({ video, onDownload, downloading, progress, downloadDone, initialMode }) {
+export default function VideoInfo({ video, onDownload, onReset, downloading, progress, downloadDone, initialMode }) {
   const [mode, setMode] = useState(initialMode || "video");
   const [showAll, setShowAll] = useState(false);
 
@@ -74,19 +74,32 @@ export default function VideoInfo({ video, onDownload, downloading, progress, do
         </button>
       </div>
 
-      {(bestFormat && downloading === bestFormat.formatId) || (bestFormat && downloadDone === bestFormat.formatId) ? (
-        <div className="smart-download-btn disabled-look">
-          <div className="smart-progress-bar">
-            <div className="smart-progress-fill" style={{ width: `${downloadDone === bestFormat.formatId ? 100 : progress?.percent || 0}%` }} />
+      {downloadDone ? (
+        <div className="done-section">
+          <div className="done-icon">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round">
+              <polyline points="20 6 9 17 4 12" />
+            </svg>
           </div>
+          <span className="done-text">Done!</span>
+          <span className="done-filename">{progress?.speed}</span>
+          <button className="done-reset-btn" onClick={onReset}>
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+              <path d="M21 12a9 9 0 11-6.22-8.56" />
+              <polyline points="21 3 21 9 15 9" />
+            </svg>
+            Download another
+          </button>
+        </div>
+      ) : downloading ? (
+        <div className="smart-download-btn disabled-look">
+          <span className="spinner" />
           <span className="smart-download-progress">
-            {downloadDone === bestFormat.formatId
-              ? "Done!"
-              : progress?.percent !== undefined
-                ? `${Math.round(progress.percent)}%`
-                : "Preparing..."}
+            {progress?.percent !== undefined
+              ? `${Math.round(progress.percent)}%`
+              : "Preparing..."}
           </span>
-          {downloadDone !== bestFormat.formatId && progress?.speed && (
+          {progress?.speed && (
             <span className="smart-download-meta">{progress.speed}</span>
           )}
         </div>
@@ -94,7 +107,6 @@ export default function VideoInfo({ video, onDownload, downloading, progress, do
         <button
           className="smart-download-btn"
           onClick={handleSmartDownload}
-          disabled={!!downloading}
         >
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
             <path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4" />
@@ -110,9 +122,9 @@ export default function VideoInfo({ video, onDownload, downloading, progress, do
         </button>
       ) : null}
 
-      {downloading === bestFormat?.formatId && progress && !downloadDone && (
+      {downloading && !downloadDone && (
         <div className="smart-progress-bar">
-          <div className="smart-progress-fill" style={{ width: `${progress.percent || 0}%` }} />
+          <div className="smart-progress-fill" style={{ width: `${progress?.percent || 0}%` }} />
         </div>
       )}
 

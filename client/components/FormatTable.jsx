@@ -102,7 +102,7 @@ export default function FormatTable({ formats, onDownload, downloading, progress
               )}
 
               {isDownloading(f.formatId) || isDone(f.formatId) ? (
-                <div className="progress-cell">
+                <div className={`progress-cell${isDone(f.formatId) ? " done" : ""}`}>
                   <div className="progress-bar">
                     <div
                       className="progress-fill"

@@ -59,6 +59,15 @@ export default function App() {
     }
   };
 
+  const reset = useCallback(() => {
+    setVideoData(null);
+    setVideoUrl(null);
+    setDownloading(null);
+    setProgress(null);
+    setDownloadDone(null);
+    setError(null);
+  }, []);
+
   const download = useCallback(async (formatId, audioFormat) => {
     setDownloading(formatId);
     setDownloadDone(null);
@@ -144,6 +153,7 @@ export default function App() {
         <VideoInfo
           video={videoData}
           onDownload={download}
+          onReset={reset}
           downloading={downloading}
           progress={progress}
           downloadDone={downloadDone}

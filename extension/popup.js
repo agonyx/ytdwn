@@ -273,8 +273,10 @@
         });
 
         progressFill.style.width = "100%";
+        progressFill.classList.add("done");
         progressPercent.textContent = "Done!";
-        progressSpeed.textContent = filename;
+        progressPercent.classList.add("done");
+        progressSpeed.textContent = "";
       }
     } catch (err) {
       progressPercent.textContent = "Failed";
