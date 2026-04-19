@@ -12,8 +12,6 @@ SHARED_FILES=(
   "popup.html"
   "popup.css"
   "popup.js"
-  "content.js"
-  "content.css"
   "background.js"
   "icons/icon16.png"
   "icons/icon32.png"
