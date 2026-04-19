@@ -27,6 +27,11 @@ Bun.serve({
     }
 
     let servePath = path.join(STATIC_DIR, url.pathname === "/" ? "index.html" : url.pathname);
+    servePath = path.resolve(servePath);
+
+    if (!servePath.startsWith(path.resolve(STATIC_DIR) + path.sep) && servePath !== path.resolve(STATIC_DIR)) {
+      return new Response("Not Found", { status: 404 });
+    }
 
     if (!fs.existsSync(servePath)) {
       servePath = path.join(STATIC_DIR, "index.html");

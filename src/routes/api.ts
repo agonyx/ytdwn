@@ -46,8 +46,8 @@ export function handleAnalyze(req: Request): Response {
             send("progress", { message: msg })
           );
           send("done", result);
-        } catch (err: any) {
-          send("error", { error: err.message || "Analysis failed" });
+        } catch {
+          send("error", { error: "Analysis failed" });
         }
 
         controller.close();
@@ -89,9 +89,9 @@ export async function handleInfo(req: Request): Promise<Response> {
       duration: info.duration,
       formats,
     });
-  } catch (err: any) {
+  } catch {
     return Response.json(
-      { error: err.message || "Failed to fetch video info" },
+      { error: "Failed to fetch video info" },
       { status: 500 }
     );
   }
@@ -126,8 +126,8 @@ export function handleDownloadStream(req: Request): Response {
             return;
           }
 
-          if (!formatId) {
-            send("error", { error: "Missing format ID" });
+          if (!formatId || !/^\d+[+-]?\d*$/.test(formatId)) {
+            send("error", { error: "Invalid format ID" });
             controller.close();
             return;
           }
@@ -160,8 +160,8 @@ export function handleDownloadStream(req: Request): Response {
               fs.unlinkSync(filePath);
             } catch {}
           }, 30000);
-        } catch (err: any) {
-          send("error", { error: err.message || "Download failed" });
+        } catch {
+          send("error", { error: "Download failed" });
         }
 
         controller.close();
@@ -190,7 +190,15 @@ export async function handleFileDownload(req: Request): Promise<Response> {
     return Response.json({ error: "Missing filename" }, { status: 400 });
   }
 
-  const filePath = path.join(DOWNLOAD_DIR, filename);
+  if (filename.includes("..") || filename.includes("/") || filename.includes("\\")) {
+    return Response.json({ error: "Invalid filename" }, { status: 400 });
+  }
+
+  const filePath = path.resolve(DOWNLOAD_DIR, filename);
+
+  if (!filePath.startsWith(path.resolve(DOWNLOAD_DIR) + path.sep)) {
+    return Response.json({ error: "Invalid filename" }, { status: 400 });
+  }
 
   if (!fs.existsSync(filePath)) {
     return Response.json({ error: "File not found" }, { status: 404 });

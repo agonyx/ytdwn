@@ -27,7 +27,9 @@ COPY --from=build /app/client/dist ./client/dist
 COPY server.ts .
 COPY src ./src
 
-RUN mkdir -p downloads
+RUN mkdir -p downloads && chown -R bun:bun /app/downloads
+
+USER bun
 
 EXPOSE 3000
 
