@@ -59,6 +59,8 @@ export default function App() {
     }
   };
 
+  const [resetKey, setResetKey] = useState(0);
+
   const reset = useCallback(() => {
     setVideoData(null);
     setVideoUrl(null);
@@ -66,6 +68,7 @@ export default function App() {
     setProgress(null);
     setDownloadDone(null);
     setError(null);
+    setResetKey((k) => k + 1);
   }, []);
 
   const download = useCallback(async (formatId, audioFormat) => {
@@ -145,7 +148,7 @@ export default function App() {
         <p>YouTube Video Downloader</p>
       </header>
 
-      <UrlInput onSubmit={fetchInfo} loading={loading} />
+      <UrlInput onSubmit={fetchInfo} loading={loading} key={resetKey} />
 
       {error && <div className="error">{error}</div>}
 
