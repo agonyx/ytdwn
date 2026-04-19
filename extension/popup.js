@@ -263,22 +263,16 @@
       }
 
       if (filename) {
-        progressFill.style.width = "100%";
-        progressPercent.textContent = "100%";
+        progressFill.style.width = "95%";
+        progressPercent.textContent = "95%";
         progressSpeed.textContent = "Saving...";
 
-        const fileRes = await fetch(`${SERVER}/api/file?file=${encodeURIComponent(filename)}`);
-        if (!fileRes.ok) throw new Error("File download failed");
+        chrome.downloads.download({
+          url: `${SERVER}/api/file?file=${encodeURIComponent(filename)}`,
+          filename: filename,
+        });
 
-        const blob = await fileRes.blob();
-        const a = document.createElement("a");
-        a.href = URL.createObjectURL(blob);
-        a.download = filename;
-        document.body.appendChild(a);
-        a.click();
-        a.remove();
-        URL.revokeObjectURL(a.href);
-
+        progressFill.style.width = "100%";
         progressPercent.textContent = "Done!";
         progressSpeed.textContent = filename;
       }

@@ -3,7 +3,7 @@
   "name": "YTDWN",
   "version": "1.0.0",
   "description": "Download YouTube videos and audio with YTDWN",
-  "permissions": ["activeTab"],
+  "permissions": ["activeTab", "downloads"],
   "host_permissions": ["https://www.youtube.com/*", "https://youtube.com/*", "https://ytdwn.vanity.pw/*"],
   "action": {
     "default_popup": "popup.html",

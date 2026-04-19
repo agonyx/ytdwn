@@ -176,7 +176,7 @@ function runYtDlp(
       );
       if (match && match[1] && match[2] && match[3] && onProgress) {
         onProgress({
-          percent: parseFloat(match[1]),
+          percent: parseFloat(match[1]) * 0.85,
           speed: match[2],
           eta: match[3],
         });

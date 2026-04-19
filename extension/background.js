@@ -1,4 +1,11 @@
 chrome.runtime.onMessage.addListener((msg, sender, sendResponse) => {
+  if (msg.type === "download") {
+    chrome.downloads.download({
+      url: msg.url,
+      filename: msg.filename,
+    });
+    return;
+  }
   if (msg.type === "fetch") {
     fetch(msg.url, msg.options)
       .then(async (res) => {

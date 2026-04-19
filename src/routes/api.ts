@@ -96,6 +96,8 @@ export function handleDownloadStream(req: Request): Response {
           const filename = path.basename(filePath);
           const ext = path.extname(filename).replace(".", "");
 
+          send("progress", { percent: 90, speed: "Processing...", eta: "" });
+
           send("done", {
             filename,
             contentType: getContentType(ext),

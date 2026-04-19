@@ -113,16 +113,11 @@ export default function App() {
       }
 
       if (filename) {
-        setProgress({ percent: 100, speed: "Saving..." });
-        const fileRes = await fetch(`/api/file?file=${encodeURIComponent(filename)}`);
-        if (!fileRes.ok) throw new Error("File download failed");
-
-        const blob = await fileRes.blob();
+        setProgress({ percent: 95, speed: "Saving..." });
         const a = document.createElement("a");
-        a.href = URL.createObjectURL(blob);
+        a.href = `/api/file?file=${encodeURIComponent(filename)}`;
         a.download = filename;
         a.click();
-        URL.revokeObjectURL(a.href);
 
         setProgress({ percent: 100, speed: filename });
         setDownloadDone(formatId);

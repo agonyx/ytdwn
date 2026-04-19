@@ -367,39 +367,15 @@
             let fill = document.getElementById("ytdwn-pfill");
             let pct = document.getElementById("ytdwn-ppct");
             let spd = document.getElementById("ytdwn-pspd");
-            if (fill) fill.style.width = "100%";
-            if (pct) pct.textContent = "100%";
+            if (fill) fill.style.width = "95%";
+            if (pct) pct.textContent = "95%";
             if (spd) spd.textContent = "Saving...";
 
-            const fileRes = await new Promise((resolve, reject) => {
-              chrome.runtime.sendMessage(
-                {
-                  type: "fetch",
-                  url: `${SERVER}/api/file?file=${encodeURIComponent(filename)}`,
-                  options: {},
-                },
-                (response) => {
-                  if (!response) return reject(new Error("No response"));
-                  resolve(response);
-                }
-              );
+            chrome.runtime.sendMessage({
+              type: "download",
+              url: `${SERVER}/api/file?file=${encodeURIComponent(filename)}`,
+              filename: filename,
             });
-
-            if (!fileRes.ok) throw new Error("File download failed");
-
-            const byteChars = atob(fileRes.body);
-            const byteArray = new Uint8Array(byteChars.length);
-            for (let i = 0; i < byteChars.length; i++) {
-              byteArray[i] = byteChars.charCodeAt(i);
-            }
-            const blob = new Blob([byteArray]);
-            const a = document.createElement("a");
-            a.href = URL.createObjectURL(blob);
-            a.download = filename;
-            document.body.appendChild(a);
-            a.click();
-            a.remove();
-            URL.revokeObjectURL(a.href);
 
             showDone(filename);
           }
