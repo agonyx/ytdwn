@@ -1,8 +1,8 @@
 import { useState } from "react";
 import FormatTable from "./FormatTable";
 
-export default function VideoInfo({ video, onDownload, downloading, progress }) {
-  const [mode, setMode] = useState("video");
+export default function VideoInfo({ video, onDownload, downloading, progress, initialMode }) {
+  const [mode, setMode] = useState(initialMode || "video");
   const [showAll, setShowAll] = useState(false);
 
   const duration = video.duration

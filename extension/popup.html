@@ -1,0 +1,67 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <link rel="stylesheet" href="popup.css">
+  <title>YTDWN</title>
+</head>
+<body>
+  <div class="popup">
+    <div class="header">
+      <h1>YTDWN</h1>
+      <span class="version">v1.0.0</span>
+    </div>
+
+    <div id="status-bar" class="status-bar" data-status="unknown">
+      <span class="status-dot"></span>
+      <span class="status-text">Checking server...</span>
+    </div>
+
+    <div id="youtube-section" class="section" style="display:none;">
+      <div class="current-video">
+        <img id="video-thumb" class="video-thumb" src="" alt="">
+        <div class="video-info">
+          <p id="video-title" class="video-title"></p>
+          <span id="video-url" class="video-url"></span>
+        </div>
+      </div>
+      <div class="actions">
+        <button id="btn-download-video" class="btn btn-primary" disabled>
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+            <rect x="2" y="4" width="20" height="16" rx="2"/>
+            <polygon points="10,9 16,12 10,15" fill="currentColor" stroke="none"/>
+          </svg>
+          Download Video
+        </button>
+        <button id="btn-download-audio" class="btn btn-secondary" disabled>
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M9 18V5l12-2v13"/>
+            <circle cx="6" cy="18" r="3"/>
+            <circle cx="18" cy="16" r="3"/>
+          </svg>
+          Download Audio
+        </button>
+      </div>
+    </div>
+
+    <div id="no-youtube" class="section" style="display:none;">
+      <div class="empty-state">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+          <circle cx="11" cy="11" r="8"/>
+          <line x1="21" y1="21" x2="16.65" y2="16.65"/>
+        </svg>
+        <p>Navigate to a YouTube video to download</p>
+      </div>
+    </div>
+
+    <div class="section footer">
+      <span class="footer-url">ytdwn.vanity.pw</span>
+    </div>
+
+    <div id="toast" class="toast" style="display:none;"></div>
+  </div>
+
+  <script src="popup.js"></script>
+</body>
+</html>

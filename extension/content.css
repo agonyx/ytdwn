@@ -1,0 +1,42 @@
+.ytdwn-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 8px 16px;
+  border: none;
+  border-radius: 20px;
+  font-size: 14px;
+  font-weight: 600;
+  font-family: Roboto, Arial, sans-serif;
+  cursor: pointer;
+  transition: all 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+  letter-spacing: 0.2px;
+}
+
+.ytdwn-btn:hover {
+  transform: translateY(-1px);
+}
+
+.ytdwn-btn:active {
+  transform: translateY(0);
+}
+
+.ytdwn-btn-video {
+  background: linear-gradient(135deg, #ff1a3d, #d91433);
+  color: white;
+}
+
+.ytdwn-btn-video:hover {
+  box-shadow: 0 6px 20px rgba(255, 26, 61, 0.35);
+}
+
+.ytdwn-btn-audio {
+  background: rgba(255, 255, 255, 0.1);
+  color: #f1f1f1;
+  border: 1px solid rgba(255, 255, 255, 0.15);
+}
+
+.ytdwn-btn-audio:hover {
+  background: rgba(255, 255, 255, 0.15);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+}

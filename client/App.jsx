@@ -1,4 +1,4 @@
-import { useState, useCallback } from "react";
+import { useState, useCallback, useEffect } from "react";
 import UrlInput from "./components/UrlInput";
 import VideoInfo from "./components/VideoInfo";
 
@@ -9,6 +9,27 @@ export default function App() {
   const [error, setError] = useState(null);
   const [downloading, setDownloading] = useState(null);
   const [progress, setProgress] = useState(null);
+  const [initialMode, setInitialMode] = useState(null);
+
+  useEffect(() => {
+    const handleHash = () => {
+      const hash = window.location.hash.slice(1);
+      if (!hash) return;
+
+      const params = new URLSearchParams(hash);
+      const url = params.get("download");
+      if (url) {
+        const mode = params.get("mode");
+        if (mode) setInitialMode(mode);
+        window.history.replaceState(null, "", window.location.pathname);
+        fetchInfo(url);
+      }
+    };
+
+    handleHash();
+    window.addEventListener("hashchange", handleHash);
+    return () => window.removeEventListener("hashchange", handleHash);
+  }, []);
 
   const fetchInfo = async (url) => {
     setLoading(true);
@@ -128,6 +149,7 @@ export default function App() {
           onDownload={download}
           downloading={downloading}
           progress={progress}
+          initialMode={initialMode}
         />
       )}
     </div>

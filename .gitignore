@@ -33,6 +33,9 @@ report.[0-9]_.[0-9]_.[0-9]_.[0-9]_.json
 # downloads
 downloads/
 
+# extension build output
+extension/dist/
+
 # playwright
 .playwright-mcp
 
