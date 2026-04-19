@@ -1,0 +1,24 @@
+{
+  "name": "ytdwn",
+  "type": "module",
+  "private": true,
+  "scripts": {
+    "dev:client": "vite",
+    "dev:server": "bun run --watch server.ts",
+    "dev": "bun run dev:server & bun run dev:client",
+    "build": "vite build",
+    "start": "bun run build && bun run server.ts"
+  },
+  "devDependencies": {
+    "@types/bun": "latest",
+    "@vitejs/plugin-react": "^6.0.1",
+    "vite": "^8.0.8"
+  },
+  "peerDependencies": {
+    "typescript": "^5"
+  },
+  "dependencies": {
+    "react": "^19.2.5",
+    "react-dom": "^19.2.5"
+  }
+}
