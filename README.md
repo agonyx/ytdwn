@@ -29,7 +29,7 @@ bun install
 bun run dev
 ```
 
-Open [http://localhost:3000](http://localhost:3000).
+Try it at [ytdwn.vanity.pw](https://ytdwn.vanity.pw) or run locally:
 
 ## Build
 
@@ -84,10 +84,6 @@ This produces unpacked directories and zips in `extension/dist/`:
 - `ytdwn-chrome/` and `ytdwn-chrome.zip`
 - `ytdwn-firefox/` and `ytdwn-firefox.zip`
 - `ytdwn-safari/` and `ytdwn-safari.zip`
-
-### Extension settings
-
-Click the extension icon in your browser toolbar to configure the YTDWN server URL (default: `http://localhost:3000`).
 
 ## License
 
