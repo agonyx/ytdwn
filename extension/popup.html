@@ -18,30 +18,54 @@
       <span class="status-text">Checking server...</span>
     </div>
 
-    <div id="youtube-section" class="section" style="display:none;">
-      <div class="current-video">
+    <div id="loading-section" class="section" style="display:none;">
+      <div class="loading-state">
+        <span class="spinner"></span>
+        <p>Fetching video info...</p>
+      </div>
+    </div>
+
+    <div id="error-section" class="section" style="display:none;">
+      <div class="error-msg" id="error-msg"></div>
+    </div>
+
+    <div id="video-section" class="section" style="display:none;">
+      <div class="video-card">
         <img id="video-thumb" class="video-thumb" src="" alt="">
-        <div class="video-info">
+        <div class="video-meta">
           <p id="video-title" class="video-title"></p>
-          <span id="video-url" class="video-url"></span>
+          <span id="video-duration" class="video-duration"></span>
         </div>
       </div>
-      <div class="actions">
-        <button id="btn-download-video" class="btn btn-primary" disabled>
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+
+      <div class="mode-toggle">
+        <button id="mode-video" class="mode-btn active">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
             <rect x="2" y="4" width="20" height="16" rx="2"/>
             <polygon points="10,9 16,12 10,15" fill="currentColor" stroke="none"/>
           </svg>
-          Download Video
+          Video
         </button>
-        <button id="btn-download-audio" class="btn btn-secondary" disabled>
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+        <button id="mode-audio" class="mode-btn">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
             <path d="M9 18V5l12-2v13"/>
             <circle cx="6" cy="18" r="3"/>
             <circle cx="18" cy="16" r="3"/>
           </svg>
-          Download Audio
+          Audio
         </button>
+      </div>
+
+      <div id="formats-list" class="formats-list"></div>
+
+      <div id="progress-section" class="progress-section" style="display:none;">
+        <div class="progress-bar">
+          <div id="progress-fill" class="progress-fill" style="width:0%"></div>
+        </div>
+        <div class="progress-info">
+          <span id="progress-percent" class="progress-percent">0%</span>
+          <span id="progress-speed" class="progress-speed"></span>
+        </div>
       </div>
     </div>
 
@@ -55,11 +79,9 @@
       </div>
     </div>
 
-    <div class="section footer">
+    <div class="footer">
       <span class="footer-url">ytdwn.vanity.pw</span>
     </div>
-
-    <div id="toast" class="toast" style="display:none;"></div>
   </div>
 
   <script src="popup.js"></script>
