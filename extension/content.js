@@ -263,18 +263,37 @@
         });
       }
 
-      async function startDownload(formatId, audioFormat, videoUrl) {
-        downloading = true;
-        document.querySelectorAll(".ytdwn-dl-btn").forEach((b) => (b.disabled = true));
+      function showProgress() {
+        body.innerHTML = `
+          <div class="ytdwn-video-card">
+            <img src="${data.thumbnail}" alt="">
+            <div class="ytdwn-video-meta">
+              <p>${escHtml(data.title)}</p>
+              ${data.duration ? `<span>${Math.floor(data.duration / 60)}:${String(data.duration % 60).padStart(2, "0")}</span>` : ""}
+            </div>
+          </div>
+          <div class="ytdwn-progress" id="ytdwn-progress">
+            <div class="ytdwn-progress-bar"><div class="ytdwn-progress-fill" id="ytdwn-pfill" style="width:0%"></div></div>
+            <div class="ytdwn-progress-info">
+              <span class="ytdwn-progress-pct" id="ytdwn-ppct">0%</span>
+              <span class="ytdwn-progress-speed" id="ytdwn-pspd"></span>
+            </div>
+          </div>
+        `;
+      }
 
-        const prog = document.getElementById("ytdwn-progress");
-        const fill = document.getElementById("ytdwn-pfill");
+      function showDone(filename) {
         const pct = document.getElementById("ytdwn-ppct");
         const spd = document.getElementById("ytdwn-pspd");
-        prog.style.display = "";
-        fill.style.width = "0%";
-        pct.textContent = "0%";
-        spd.textContent = "";
+        const fill = document.getElementById("ytdwn-pfill");
+        if (fill) fill.style.width = "100%";
+        if (pct) pct.textContent = "Done!";
+        if (spd) spd.textContent = filename;
+      }
+
+      async function startDownload(formatId, audioFormat, videoUrl) {
+        downloading = true;
+        showProgress();
 
         try {
           const res = await new Promise((resolve, reject) => {
@@ -314,16 +333,22 @@
           let filename = null;
           let lastPercent = 0;
 
+          let fill = document.getElementById("ytdwn-pfill");
+          let pct = document.getElementById("ytdwn-ppct");
+          let spd = document.getElementById("ytdwn-pspd");
+
           for (let i = 0; i < lines.length; i++) {
             const line = lines[i];
             if (line.startsWith("data: ")) {
               try {
                 const d = JSON.parse(line.slice(6));
                 if (d.percent !== undefined) {
-                  lastPercent = d.percent;
-                  fill.style.width = `${d.percent}%`;
-                  pct.textContent = `${Math.round(d.percent)}%`;
-                  if (d.speed) spd.textContent = d.speed;
+                  if (!fill) fill = document.getElementById("ytdwn-pfill");
+                  if (!pct) pct = document.getElementById("ytdwn-ppct");
+                  if (!spd) spd = document.getElementById("ytdwn-pspd");
+                  if (fill) fill.style.width = `${d.percent}%`;
+                  if (pct) pct.textContent = `${Math.round(d.percent)}%`;
+                  if (d.speed && spd) spd.textContent = d.speed;
                 }
               } catch {}
             }
@@ -339,9 +364,12 @@
           }
 
           if (filename) {
-            fill.style.width = "100%";
-            pct.textContent = "100%";
-            spd.textContent = "Saving...";
+            let fill = document.getElementById("ytdwn-pfill");
+            let pct = document.getElementById("ytdwn-ppct");
+            let spd = document.getElementById("ytdwn-pspd");
+            if (fill) fill.style.width = "100%";
+            if (pct) pct.textContent = "100%";
+            if (spd) spd.textContent = "Saving...";
 
             const fileRes = await new Promise((resolve, reject) => {
               chrome.runtime.sendMessage(
@@ -373,18 +401,15 @@
             a.remove();
             URL.revokeObjectURL(a.href);
 
-            pct.textContent = "Done!";
-            spd.textContent = filename;
+            showDone(filename);
           }
         } catch (err) {
-          pct.textContent = "Failed";
-          spd.textContent = err.message;
+          const pct = document.getElementById("ytdwn-ppct");
+          const spd = document.getElementById("ytdwn-pspd");
+          if (pct) pct.textContent = "Failed";
+          if (spd) spd.textContent = err.message;
         } finally {
           downloading = false;
-          setTimeout(() => {
-            prog.style.display = "none";
-            document.querySelectorAll(".ytdwn-dl-btn").forEach((b) => (b.disabled = false));
-          }, 3000);
         }
       }
 

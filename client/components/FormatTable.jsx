@@ -60,8 +60,9 @@ function QualityBadge({ height, quality, isAudio }) {
   );
 }
 
-export default function FormatTable({ formats, onDownload, downloading, progress, isAudio, bestFormatId }) {
+export default function FormatTable({ formats, onDownload, downloading, progress, downloadDone, isAudio, bestFormatId }) {
   const isDownloading = (formatId) => downloading === formatId;
+  const isDone = (formatId) => downloadDone === formatId;
 
   return (
     <div className="format-section">
@@ -100,22 +101,24 @@ export default function FormatTable({ formats, onDownload, downloading, progress
                 <span className="recommended-badge">Recommended</span>
               )}
 
-              {isDownloading(f.formatId) ? (
+              {isDownloading(f.formatId) || isDone(f.formatId) ? (
                 <div className="progress-cell">
                   <div className="progress-bar">
                     <div
                       className="progress-fill"
-                      style={{ width: `${progress?.percent || 0}%` }}
+                      style={{ width: `${isDone(f.formatId) ? 100 : progress?.percent || 0}%` }}
                     />
                   </div>
                   <span className="progress-text">
-                    {progress?.percent !== undefined
-                      ? `${Math.round(progress.percent)}%`
-                      : "Preparing..."}
+                    {isDone(f.formatId)
+                      ? "Done!"
+                      : progress?.percent !== undefined
+                        ? `${Math.round(progress.percent)}%`
+                        : "Preparing..."}
                   </span>
-                  {progress?.speed && (
+                  {isDone(f.formatId) ? null : progress?.speed ? (
                     <span className="progress-meta">{progress.speed}</span>
-                  )}
+                  ) : null}
                 </div>
               ) : (
                 <button

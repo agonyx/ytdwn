@@ -1,7 +1,7 @@
 import { useState } from "react";
 import FormatTable from "./FormatTable";
 
-export default function VideoInfo({ video, onDownload, downloading, progress, initialMode }) {
+export default function VideoInfo({ video, onDownload, downloading, progress, downloadDone, initialMode }) {
   const [mode, setMode] = useState(initialMode || "video");
   const [showAll, setShowAll] = useState(false);
 
@@ -74,58 +74,64 @@ export default function VideoInfo({ video, onDownload, downloading, progress, in
         </button>
       </div>
 
-      {bestFormat && (
+      {(bestFormat && downloading === bestFormat.formatId) || (bestFormat && downloadDone === bestFormat.formatId) ? (
+        <div className="smart-download-btn disabled-look">
+          <div className="smart-progress-bar">
+            <div className="smart-progress-fill" style={{ width: `${downloadDone === bestFormat.formatId ? 100 : progress?.percent || 0}%` }} />
+          </div>
+          <span className="smart-download-progress">
+            {downloadDone === bestFormat.formatId
+              ? "Done!"
+              : progress?.percent !== undefined
+                ? `${Math.round(progress.percent)}%`
+                : "Preparing..."}
+          </span>
+          {downloadDone !== bestFormat.formatId && progress?.speed && (
+            <span className="smart-download-meta">{progress.speed}</span>
+          )}
+        </div>
+      ) : bestFormat ? (
         <button
           className="smart-download-btn"
           onClick={handleSmartDownload}
-          disabled={downloading === bestFormat.formatId}
+          disabled={!!downloading}
         >
-          {downloading === bestFormat.formatId ? (
-            <>
-              <span className="spinner" />
-              <span className="smart-download-progress">
-                {progress?.percent !== undefined ? `${Math.round(progress.percent)}%` : "Preparing..."}
-              </span>
-              {progress?.speed && <span className="smart-download-meta">{progress.speed}</span>}
-            </>
-          ) : (
-            <>
-              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
-                <path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4" />
-                <polyline points="7 10 12 15 17 10" />
-                <line x1="12" y1="15" x2="12" y2="3" />
-              </svg>
-              {smartLabel}
-              {bestVideo && mode === "video" && bestVideo.filesize && (
-                <span className="smart-download-size">
-                  {formatSize(bestVideo.filesize || bestVideo.filesizeApprox)}
-                </span>
-              )}
-            </>
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+            <path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4" />
+            <polyline points="7 10 12 15 17 10" />
+            <line x1="12" y1="15" x2="12" y2="3" />
+          </svg>
+          {smartLabel}
+          {bestVideo && mode === "video" && bestVideo.filesize && (
+            <span className="smart-download-size">
+              {formatSize(bestVideo.filesize || bestVideo.filesizeApprox)}
+            </span>
           )}
         </button>
-      )}
+      ) : null}
 
-      {downloading === bestFormat?.formatId && progress && (
+      {downloading === bestFormat?.formatId && progress && !downloadDone && (
         <div className="smart-progress-bar">
           <div className="smart-progress-fill" style={{ width: `${progress.percent || 0}%` }} />
         </div>
       )}
 
-      <button className="toggle-options-btn" onClick={() => setShowAll((s) => !s)}>
-        {showAll ? "Hide options" : "More options..."}
-        <svg
-          viewBox="0 0 24 24"
-          fill="none"
-          stroke="currentColor"
-          strokeWidth="2.5"
-          strokeLinecap="round"
-          strokeLinejoin="round"
-          className={`chevron${showAll ? " open" : ""}`}
-        >
-          <polyline points="6 9 12 15 18 9" />
-        </svg>
-      </button>
+      {!downloading && !downloadDone && (
+        <button className="toggle-options-btn" onClick={() => setShowAll((s) => !s)}>
+          {showAll ? "Hide options" : "More options..."}
+          <svg
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            strokeWidth="2.5"
+            strokeLinecap="round"
+            strokeLinejoin="round"
+            className={`chevron${showAll ? " open" : ""}`}
+          >
+            <polyline points="6 9 12 15 18 9" />
+          </svg>
+        </button>
+      )}
 
       {showAll && activeFormats.length > 0 && (
         <FormatTable
@@ -133,6 +139,7 @@ export default function VideoInfo({ video, onDownload, downloading, progress, in
           onDownload={onDownload}
           downloading={downloading}
           progress={progress}
+          downloadDone={downloadDone}
           isAudio={mode === "audio"}
           bestFormatId={bestFormat?.formatId}
         />

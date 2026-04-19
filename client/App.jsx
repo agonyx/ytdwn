@@ -9,6 +9,7 @@ export default function App() {
   const [error, setError] = useState(null);
   const [downloading, setDownloading] = useState(null);
   const [progress, setProgress] = useState(null);
+  const [downloadDone, setDownloadDone] = useState(null);
   const [initialMode, setInitialMode] = useState(null);
 
   useEffect(() => {
@@ -60,6 +61,7 @@ export default function App() {
 
   const download = useCallback(async (formatId, audioFormat) => {
     setDownloading(formatId);
+    setDownloadDone(null);
     setProgress({ percent: 0, speed: "", eta: "" });
 
     try {
@@ -111,7 +113,7 @@ export default function App() {
       }
 
       if (filename) {
-        setProgress((p) => ({ ...p, percent: 100 }));
+        setProgress({ percent: 100, speed: "Saving..." });
         const fileRes = await fetch(`/api/file?file=${encodeURIComponent(filename)}`);
         if (!fileRes.ok) throw new Error("File download failed");
 
@@ -121,14 +123,14 @@ export default function App() {
         a.download = filename;
         a.click();
         URL.revokeObjectURL(a.href);
+
+        setProgress({ percent: 100, speed: filename });
+        setDownloadDone(formatId);
       }
     } catch (err) {
       alert(err.message);
     } finally {
-      setTimeout(() => {
-        setDownloading(null);
-        setProgress(null);
-      }, 1500);
+      setDownloading(null);
     }
   }, [videoUrl]);
 
@@ -149,6 +151,7 @@ export default function App() {
           onDownload={download}
           downloading={downloading}
           progress={progress}
+          downloadDone={downloadDone}
           initialMode={initialMode}
         />
       )}

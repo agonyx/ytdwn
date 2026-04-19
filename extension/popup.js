@@ -207,7 +207,8 @@
 
   async function startDownload(formatId, audioFormat) {
     downloading = true;
-    disableAllButtons(true);
+    hide(formatsList);
+    hide(document.querySelector(".mode-toggle"));
     show(progressSection);
     progressFill.style.width = "0%";
     progressPercent.textContent = "0%";
@@ -278,15 +279,14 @@
         a.remove();
         URL.revokeObjectURL(a.href);
 
-        progressSpeed.textContent = "Done!";
+        progressPercent.textContent = "Done!";
+        progressSpeed.textContent = filename;
       }
     } catch (err) {
       progressPercent.textContent = "Failed";
       progressSpeed.textContent = err.message;
     } finally {
       downloading = false;
-      disableAllButtons(false);
-      setTimeout(() => hide(progressSection), 2000);
     }
   }
 
