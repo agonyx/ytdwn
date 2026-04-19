@@ -14,17 +14,23 @@
   const videoSection = $("#video-section");
   const noYoutube = $("#no-youtube");
   const formatsList = $("#formats-list");
-  const progressSection = $("#progress-section");
-  const progressFill = $("#progress-fill");
-  const progressPercent = $("#progress-percent");
-  const progressSpeed = $("#progress-speed");
   const modeVideoBtn = $("#mode-video");
   const modeAudioBtn = $("#mode-audio");
+  const smartDownload = $("#smart-download");
+  const smartBtn = $("#smart-btn");
+  const smartBtnLabel = $("#smart-btn-label");
+  const smartBtnSize = $("#smart-btn-size");
+  const smartProgressBar = $("#smart-progress-bar");
+  const smartProgressFill = $("#smart-progress-fill");
+  const toggleOptions = $("#toggle-options");
+  const toggleLabel = $("#toggle-label");
+  const toggleChevron = $("#toggle-chevron");
 
   let videoUrl = null;
   let videoData = null;
   let currentMode = "video";
   let downloading = false;
+  let showAll = false;
 
   function setStatus(status, text) {
     statusBar.dataset.status = status;
@@ -114,6 +120,34 @@
     return "Works everywhere";
   }
 
+  function getBestFormat() {
+    const isAudio = currentMode === "audio";
+    const formats = isAudio ? videoData.formats.audioOnly : videoData.formats.videoAudio;
+    return formats.length > 0 ? formats[0] : null;
+  }
+
+  function updateSmartButton() {
+    if (!videoData || downloading) return;
+
+    const best = getBestFormat();
+    if (!best) {
+      hide(smartDownload);
+      return;
+    }
+
+    show(smartDownload);
+
+    const isAudio = currentMode === "audio";
+    if (isAudio) {
+      smartBtnLabel.textContent = "Download Audio (MP3)";
+      smartBtnSize.textContent = "";
+    } else {
+      smartBtnLabel.textContent = `Download Video (${best.height}p)`;
+      const size = best.filesize || best.filesizeApprox;
+      smartBtnSize.textContent = size ? formatSize(size) : "";
+    }
+  }
+
   function renderFormats() {
     formatsList.innerHTML = "";
     if (!videoData) return;
@@ -167,9 +201,32 @@
     });
   }
 
+  function updateUI() {
+    if (!videoData) return;
+
+    updateSmartButton();
+
+    if (showAll && !downloading) {
+      show(formatsList);
+    } else {
+      hide(formatsList);
+    }
+
+    if (!downloading) {
+      show(toggleOptions);
+      toggleLabel.textContent = showAll ? "Hide options" : "More options...";
+      toggleChevron.classList.toggle("open", showAll);
+    } else {
+      hide(toggleOptions);
+    }
+  }
+
   async function fetchInfo(url) {
     hide(errorSection);
     hide(videoSection);
+    hide(smartDownload);
+    hide(toggleOptions);
+    hide(formatsList);
     show(loadingSection);
 
     try {
@@ -183,6 +240,7 @@
       if (!res.ok) throw new Error(data.error || "Failed to fetch video info");
 
       videoData = data;
+      showAll = false;
       hide(loadingSection);
       show(videoSection);
 
@@ -198,6 +256,7 @@
       }
 
       renderFormats();
+      updateUI();
     } catch (err) {
       hide(loadingSection);
       errorMsg.textContent = err.message;
@@ -208,11 +267,14 @@
   async function startDownload(formatId, audioFormat) {
     downloading = true;
     hide(formatsList);
-    hide(document.querySelector(".mode-toggle"));
-    show(progressSection);
-    progressFill.style.width = "0%";
-    progressPercent.textContent = "0%";
-    progressSpeed.textContent = "";
+    hide(toggleOptions);
+    smartBtn.disabled = true;
+
+    const isAudio = currentMode === "audio";
+    smartBtnLabel.textContent = "Preparing...";
+    smartBtnSize.textContent = "";
+    show(smartProgressBar);
+    smartProgressFill.style.width = "0%";
 
     try {
       const res = await fetch(`${SERVER}/api/download`, {
@@ -243,9 +305,9 @@
             try {
               const data = JSON.parse(line.slice(6));
               if (data.percent !== undefined) {
-                progressFill.style.width = `${data.percent}%`;
-                progressPercent.textContent = `${Math.round(data.percent)}%`;
-                if (data.speed) progressSpeed.textContent = data.speed;
+                smartProgressFill.style.width = `${data.percent}%`;
+                smartBtnLabel.textContent = `${Math.round(data.percent)}%`;
+                if (data.speed) smartBtnSize.textContent = data.speed;
               }
             } catch {}
           }
@@ -263,47 +325,58 @@
       }
 
       if (filename) {
-        progressFill.style.width = "95%";
-        progressPercent.textContent = "95%";
-        progressSpeed.textContent = "Saving...";
+        smartProgressFill.style.width = "95%";
+        smartBtnLabel.textContent = "95%";
+        smartBtnSize.textContent = "Saving...";
 
         chrome.downloads.download({
           url: `${SERVER}/api/file?file=${encodeURIComponent(filename)}`,
           filename: filename,
         });
 
-        progressFill.style.width = "100%";
-        progressFill.classList.add("done");
-        progressPercent.textContent = "Done!";
-        progressPercent.classList.add("done");
-        progressSpeed.textContent = "";
+        smartProgressFill.style.width = "100%";
+        smartProgressFill.classList.add("done");
+        smartBtnLabel.textContent = "Done!";
+        smartBtnLabel.classList.add("done");
+        smartBtnSize.textContent = "";
       }
     } catch (err) {
-      progressPercent.textContent = "Failed";
-      progressSpeed.textContent = err.message;
+      smartBtnLabel.textContent = "Failed";
+      smartBtnSize.textContent = err.message;
     } finally {
       downloading = false;
+      smartBtn.disabled = false;
     }
   }
 
-  function disableAllButtons(disabled) {
-    formatsList.querySelectorAll(".dl-btn").forEach((btn) => {
-      btn.disabled = disabled;
-    });
-  }
+  smartBtn.addEventListener("click", () => {
+    const best = getBestFormat();
+    if (!best) return;
+    const isAudio = currentMode === "audio";
+    startDownload(best.formatId, isAudio ? "mp3" : undefined);
+  });
+
+  toggleOptions.addEventListener("click", () => {
+    showAll = !showAll;
+    updateUI();
+  });
 
   modeVideoBtn.addEventListener("click", () => {
     currentMode = "video";
     modeVideoBtn.classList.add("active");
     modeAudioBtn.classList.remove("active");
+    showAll = false;
     renderFormats();
+    updateUI();
   });
 
   modeAudioBtn.addEventListener("click", () => {
     currentMode = "audio";
     modeAudioBtn.classList.add("active");
     modeVideoBtn.classList.remove("active");
+    showAll = false;
     renderFormats();
+    updateUI();
   });
 
   async function init() {

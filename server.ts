@@ -1,4 +1,4 @@
-import { handleInfo, handleDownloadStream, handleFileDownload } from "./src/routes/api";
+import { handleInfo, handleDownloadStream, handleFileDownload, handleAnalyze } from "./src/routes/api";
 import path from "path";
 import fs from "fs";
 
@@ -16,6 +16,10 @@ Bun.serve({
 
     if (url.pathname === "/api/download" && req.method === "POST") {
       return handleDownloadStream(req);
+    }
+
+    if (url.pathname === "/api/analyze" && req.method === "POST") {
+      return handleAnalyze(req);
     }
 
     if (url.pathname === "/api/file" && req.method === "GET") {

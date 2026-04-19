@@ -271,6 +271,126 @@ body::after {
   animation: fadeUp 0.5s cubic-bezier(0.16, 1, 0.3, 1);
 }
 
+.analysis-section {
+  margin-top: 1rem;
+  animation: fadeUp 0.5s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.analysis-results {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 1.5rem;
+  padding: 1rem 1.5rem;
+  background: rgba(255, 255, 255, 0.02);
+  border: 1px solid rgba(255, 255, 255, 0.06);
+  border-radius: 12px;
+}
+
+.analysis-item {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.2rem;
+}
+
+.analysis-label {
+  font-size: 0.65rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 1.5px;
+  color: #555;
+}
+
+.analysis-value {
+  font-size: 1.3rem;
+  font-weight: 800;
+  font-variant-numeric: tabular-nums;
+}
+
+.analysis-value.bpm {
+  color: #ff4d6a;
+}
+
+.analysis-value.key {
+  color: #50b4ff;
+}
+
+.analysis-confidence {
+  font-size: 0.65rem;
+  color: #444;
+  font-variant-numeric: tabular-nums;
+}
+
+.analysis-divider {
+  width: 1px;
+  height: 40px;
+  background: rgba(255, 255, 255, 0.06);
+}
+
+.analyze-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  width: 100%;
+  padding: 0.75rem;
+  background: rgba(255, 255, 255, 0.02);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 10px;
+  color: #888;
+  font-size: 0.85rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.analyze-btn svg {
+  width: 16px;
+  height: 16px;
+}
+
+.analyze-btn:hover:not(:disabled) {
+  background: rgba(255, 255, 255, 0.04);
+  border-color: rgba(255, 255, 255, 0.15);
+  color: #c0c0c0;
+}
+
+.analyze-btn.analyzing {
+  cursor: wait;
+  color: #666;
+}
+
+.analysis-error {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  padding: 0.75rem 1rem;
+  background: rgba(255, 26, 61, 0.04);
+  border: 1px solid rgba(255, 26, 61, 0.1);
+  border-radius: 10px;
+  font-size: 0.8rem;
+  color: #ff6b7a;
+}
+
+.analysis-error .analyze-btn {
+  width: auto;
+  padding: 0.35rem 1rem;
+  font-size: 0.75rem;
+  border-color: rgba(255, 26, 61, 0.2);
+  color: #ff6b7a;
+}
+
+.analysis-error .analyze-btn:hover {
+  background: rgba(255, 26, 61, 0.08);
+  color: #ff8a9a;
+}
+
+.analysis-error span {
+  flex: 1;
+}
+
 .mode-btn {
   flex: 1;
   display: flex;

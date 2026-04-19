@@ -56,17 +56,30 @@
         </button>
       </div>
 
-      <div id="formats-list" class="formats-list"></div>
+      <div id="smart-download" class="smart-download" style="display:none;">
+        <button id="smart-btn" class="smart-btn">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/>
+            <polyline points="7 10 12 15 17 10"/>
+            <line x1="12" y1="15" x2="12" y2="3"/>
+          </svg>
+          <span id="smart-btn-label">Download Video</span>
+          <span id="smart-btn-size" class="smart-btn-size"></span>
+        </button>
 
-      <div id="progress-section" class="progress-section" style="display:none;">
-        <div class="progress-bar">
-          <div id="progress-fill" class="progress-fill" style="width:0%"></div>
-        </div>
-        <div class="progress-info">
-          <span id="progress-percent" class="progress-percent">0%</span>
-          <span id="progress-speed" class="progress-speed"></span>
+        <div id="smart-progress-bar" class="smart-progress-bar" style="display:none;">
+          <div id="smart-progress-fill" class="smart-progress-fill" style="width:0%"></div>
         </div>
       </div>
+
+      <button id="toggle-options" class="toggle-options" style="display:none;">
+        <span id="toggle-label">More options...</span>
+        <svg id="toggle-chevron" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" class="chevron">
+          <polyline points="6 9 12 15 18 9"/>
+        </svg>
+      </button>
+
+      <div id="formats-list" class="formats-list" style="display:none;"></div>
     </div>
 
     <div id="no-youtube" class="section" style="display:none;">

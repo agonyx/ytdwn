@@ -6,6 +6,7 @@ import {
   getContentType,
   type DownloadProgress,
 } from "../services/downloader";
+import { analyzeAudio } from "../services/analyzer";
 import { isValidYouTubeUrl } from "../utils/helpers";
 import path from "path";
 import fs from "fs";
@@ -14,6 +15,57 @@ const DOWNLOAD_DIR = path.resolve("downloads");
 
 if (!fs.existsSync(DOWNLOAD_DIR)) {
   fs.mkdirSync(DOWNLOAD_DIR, { recursive: true });
+}
+
+export function handleAnalyze(req: Request): Response {
+  let aborted = false;
+
+  const stream = new ReadableStream({
+    start(controller) {
+      const encoder = new TextEncoder();
+
+      const send = (event: string, data: any) => {
+        if (aborted) return;
+        controller.enqueue(
+          encoder.encode(`event: ${event}\ndata: ${JSON.stringify(data)}\n\n`)
+        );
+      };
+
+      (async () => {
+        try {
+          const body = (await req.json()) as { url?: string };
+          const url = body.url?.trim();
+
+          if (!url || !isValidYouTubeUrl(url)) {
+            send("error", { error: "Please provide a valid YouTube URL" });
+            controller.close();
+            return;
+          }
+
+          const result = await analyzeAudio(url, (msg) =>
+            send("progress", { message: msg })
+          );
+          send("done", result);
+        } catch (err: any) {
+          send("error", { error: err.message || "Analysis failed" });
+        }
+
+        controller.close();
+      })();
+
+      req.signal.addEventListener("abort", () => {
+        aborted = true;
+      });
+    },
+  });
+
+  return new Response(stream, {
+    headers: {
+      "Content-Type": "text/event-stream",
+      "Cache-Control": "no-cache",
+      Connection: "keep-alive",
+    },
+  });
 }
 
 export async function handleInfo(req: Request): Promise<Response> {

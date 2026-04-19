@@ -1,7 +1,7 @@
 import { useState } from "react";
 import FormatTable from "./FormatTable";
 
-export default function VideoInfo({ video, onDownload, onReset, downloading, progress, downloadDone, initialMode }) {
+export default function VideoInfo({ video, onDownload, onReset, downloading, progress, downloadDone, initialMode, analysis, analyzing, analysisProgress, onAnalyze }) {
   const [mode, setMode] = useState(initialMode || "video");
   const [showAll, setShowAll] = useState(false);
 
@@ -49,6 +49,49 @@ export default function VideoInfo({ video, onDownload, onReset, downloading, pro
           )}
         </div>
       </div>
+
+      {!downloading && !downloadDone && (
+        <div className="analysis-section">
+          {analysis && !analysis.error ? (
+            <div className="analysis-results">
+              <div className="analysis-item">
+                <span className="analysis-label">BPM</span>
+                <span className="analysis-value bpm">{analysis.bpm}</span>
+                {analysis.bpmConfidence > 0 && (
+                  <span className="analysis-confidence">{Math.round(analysis.bpmConfidence * 100)}%</span>
+                )}
+              </div>
+              <div className="analysis-divider" />
+              <div className="analysis-item">
+                <span className="analysis-label">Key</span>
+                <span className="analysis-value key">{analysis.key} {analysis.scale}</span>
+                {analysis.keyStrength > 0 && (
+                  <span className="analysis-confidence">{Math.round(analysis.keyStrength * 100)}%</span>
+                )}
+              </div>
+            </div>
+          ) : analyzing ? (
+            <button className="analyze-btn analyzing" disabled>
+              <span className="spinner" />
+              {analysisProgress || "Analyzing..."}
+            </button>
+          ) : analysis?.error ? (
+            <div className="analysis-error">
+              <span>{analysis.error}</span>
+              <button className="analyze-btn" onClick={onAnalyze}>Retry</button>
+            </div>
+          ) : (
+            <button className="analyze-btn" onClick={onAnalyze}>
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                <path d="M9 18V5l12-2v13" />
+                <circle cx="6" cy="18" r="3" />
+                <circle cx="18" cy="16" r="3" />
+              </svg>
+              Analyze BPM & Key
+            </button>
+          )}
+        </div>
+      )}
 
       <div className="mode-toggle">
         <button
