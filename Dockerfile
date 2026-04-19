@@ -27,7 +27,7 @@ COPY --from=build /app/client/dist ./client/dist
 COPY server.ts .
 COPY src ./src
 
-RUN mkdir -p downloads analysis && chown -R bun:bun /app/downloads /app/analysis
+RUN mkdir -p downloads analysis && chown -R bun:bun /app
 
 USER bun
 
