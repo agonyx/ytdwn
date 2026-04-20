@@ -75,12 +75,12 @@ function downloadAudioForAnalysis(url: string): Promise<string> {
 
     const args = [
       "-f",
-      "bestaudio[ext=m4a]/bestaudio/best",
+      "worstaudio[ext=m4a]/worstaudio/worstaudio/bestaudio",
       "-x",
       "--audio-format",
       "wav",
       "--audio-quality",
-      "5",
+      "9",
       "-o",
       outputPath,
       "--no-playlist",
@@ -145,7 +145,7 @@ function decodeToPCM(
     "-ac",
     "1",
     "-ar",
-    "44100",
+    "22050",
     "-f",
     "f32le",
   ];
