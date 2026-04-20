@@ -6,6 +6,26 @@
   const YOUTUBE_REGEX =
     /^(https?:\/\/)?(www\.)?(youtube\.com\/(watch\?v=|embed\/|shorts\/)|youtu\.be\/)[\w-]{11}/;
 
+  const SHARP_TO_FLAT = {
+    "C#": "Db",
+    "D#": "Eb",
+    "F#": "Gb",
+    "G#": "Ab",
+    "A#": "Bb",
+  };
+  const FLAT_TO_SHARP = {
+    Db: "C#",
+    Eb: "D#",
+    Gb: "F#",
+    Ab: "G#",
+    Bb: "A#",
+  };
+
+  const DEFAULT_SETTINGS = {
+    defaultAudioFormat: "mp3",
+    keyNotation: "sharp",
+  };
+
   const statusBar = $("#status-bar");
   const statusText = statusBar.querySelector(".status-text");
   const loadingSection = $("#loading-section");
@@ -27,6 +47,8 @@
   const toggleChevron = $("#toggle-chevron");
   const analysisSection = $("#analysis-section");
   const analyzeBtn = $("#analyze-btn");
+  const audioFormatRow = $("#audio-format-row");
+  const audioFormatSelect = $("#audio-format-select");
 
   let videoUrl = null;
   let videoData = null;
@@ -35,6 +57,7 @@
   let showAll = false;
   let analyzing = false;
   let analysisData = null;
+  let settings = { ...DEFAULT_SETTINGS };
 
   function setStatus(status, text) {
     statusBar.dataset.status = status;
@@ -47,6 +70,28 @@
 
   function hide(el) {
     el.style.display = "none";
+  }
+
+  async function loadSettings() {
+    try {
+      const stored = await chrome.storage.sync.get("settings");
+      if (stored.settings) {
+        settings = { ...DEFAULT_SETTINGS, ...stored.settings };
+      }
+    } catch {}
+  }
+
+  async function saveSettings() {
+    try {
+      await chrome.storage.sync.set({ settings });
+    } catch {}
+  }
+
+  function convertKey(key, notation) {
+    if (notation === "flat") {
+      return SHARP_TO_FLAT[key] || key;
+    }
+    return FLAT_TO_SHARP[key] || key;
   }
 
   async function checkServer() {
@@ -143,7 +188,8 @@
 
     const isAudio = currentMode === "audio";
     if (isAudio) {
-      smartBtnLabel.textContent = "Download Audio (MP3)";
+      const fmt = settings.defaultAudioFormat.toUpperCase();
+      smartBtnLabel.textContent = `Download Audio (${fmt})`;
       smartBtnSize.textContent = "";
     } else {
       smartBtnLabel.textContent = `Download Video (${best.height}p)`;
@@ -179,13 +225,12 @@
       }
 
       if (isAudio) {
-        html += `<select class="audio-select" id="audio-fmt-${f.formatId}">
-          <option value="mp3">MP3</option>
-          <option value="m4a">M4A</option>
-          <option value="opus">OPUS</option>
-          <option value="flac">FLAC</option>
-          <option value="wav">WAV</option>
-        </select>`;
+        html += `<select class="audio-select" id="audio-fmt-${f.formatId}">`;
+        for (const opt of ["mp3", "m4a", "opus", "flac", "wav"]) {
+          const selected = opt === settings.defaultAudioFormat ? " selected" : "";
+          html += `<option value="${opt}"${selected}>${opt.toUpperCase()}</option>`;
+        }
+        html += `</select>`;
       }
 
       html += `<button class="dl-btn" data-format="${f.formatId}" ${downloading ? "disabled" : ""}>Download</button>`;
@@ -209,6 +254,12 @@
     if (!videoData) return;
 
     updateSmartButton();
+
+    if (currentMode === "audio" && !downloading) {
+      show(audioFormatRow);
+    } else {
+      hide(audioFormatRow);
+    }
 
     if (!downloading && !analyzing) {
       show(analysisSection);
@@ -238,6 +289,7 @@
     hide(smartDownload);
     hide(toggleOptions);
     hide(formatsList);
+    hide(audioFormatRow);
     show(loadingSection);
 
     try {
@@ -277,90 +329,62 @@
     }
   }
 
-  async function startDownload(formatId, audioFormat) {
+  function startDownload(formatId, audioFormat) {
     downloading = true;
     hide(formatsList);
     hide(toggleOptions);
+    hide(audioFormatRow);
     smartBtn.disabled = true;
 
-    const isAudio = currentMode === "audio";
     smartBtnLabel.textContent = "Preparing...";
     smartBtnSize.textContent = "";
     show(smartProgressBar);
     smartProgressFill.style.width = "0%";
 
-    try {
-      const res = await fetch(`${SERVER}/api/download`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          url: videoUrl,
-          formatId,
-          ...(audioFormat ? { audioFormat } : {}),
-        }),
-      });
+    chrome.runtime.sendMessage({
+      type: "startDownload",
+      videoUrl,
+      formatId,
+      audioFormat,
+    });
+  }
 
-      const reader = res.body.getReader();
-      const decoder = new TextDecoder();
-      let buffer = "";
-      let filename = null;
+  function restoreDownloadState(state) {
+    if (!state || !state.active) return;
 
-      while (true) {
-        const { done, value } = await reader.read();
-        if (done) break;
+    downloading = true;
+    smartBtn.disabled = true;
+    show(smartProgressBar);
 
-        buffer += decoder.decode(value, { stream: true });
-        const lines = buffer.split("\n");
-        buffer = lines.pop() || "";
+    if (state.percent > 0) {
+      smartProgressFill.style.width = `${state.percent}%`;
+      smartBtnLabel.textContent = `${Math.round(state.percent)}%`;
+      smartBtnSize.textContent = state.speed || "";
+    }
+  }
 
-        for (const line of lines) {
-          if (line.startsWith("data: ")) {
-            try {
-              const data = JSON.parse(line.slice(6));
-              if (data.percent !== undefined) {
-                smartProgressFill.style.width = `${data.percent}%`;
-                smartBtnLabel.textContent = `${Math.round(data.percent)}%`;
-                if (data.speed) smartBtnSize.textContent = data.speed;
-              }
-            } catch {}
-          }
-          if (line.startsWith("event: done")) {
-            const idx = lines.indexOf(line);
-            const nextLine = lines[idx + 1];
-            if (nextLine && nextLine.startsWith("data: ")) {
-              try {
-                const data = JSON.parse(nextLine.slice(6));
-                filename = data.filename;
-              } catch {}
-            }
-          }
-        }
-      }
-
-      if (filename) {
-        smartProgressFill.style.width = "95%";
-        smartBtnLabel.textContent = "95%";
-        smartBtnSize.textContent = "Saving...";
-
-        chrome.downloads.download({
-          url: `${SERVER}/api/file?file=${encodeURIComponent(filename)}`,
-          filename: filename,
-        });
-
-        smartProgressFill.style.width = "100%";
-        smartProgressFill.classList.add("done");
-        smartBtnLabel.textContent = "Done!";
-        smartBtnLabel.classList.add("done");
-        smartBtnSize.textContent = "";
-      }
-    } catch (err) {
-      smartBtnLabel.textContent = "Failed";
-      smartBtnSize.textContent = err.message;
-    } finally {
+  chrome.runtime.onMessage.addListener((msg) => {
+    if (msg.type === "downloadProgress") {
+      smartProgressFill.style.width = `${msg.percent}%`;
+      smartBtnLabel.textContent = `${Math.round(msg.percent)}%`;
+      smartBtnSize.textContent = msg.speed || "";
+    }
+    if (msg.type === "downloadDone") {
+      smartProgressFill.style.width = "100%";
+      smartProgressFill.classList.add("done");
+      smartBtnLabel.textContent = "Done!";
+      smartBtnLabel.classList.add("done");
+      smartBtnSize.textContent = "";
       downloading = false;
       smartBtn.disabled = false;
     }
-  }
+    if (msg.type === "downloadError") {
+      smartBtnLabel.textContent = "Failed";
+      smartBtnSize.textContent = msg.error;
+      downloading = false;
+      smartBtn.disabled = false;
+    }
+  });
 
   analyzeBtn.addEventListener("click", async () => {
     if (!videoUrl || analyzing) return;
@@ -428,6 +452,18 @@
     }
 
     if (analysisData && !analysisData.error) {
+      const displayKey = convertKey(analysisData.key, settings.keyNotation);
+      const otherNotation = settings.keyNotation === "sharp" ? "flat" : "sharp";
+      const toggleLabel = settings.keyNotation === "sharp" ? "♭" : "♯";
+
+      const hasAlternative = analysisData.key in SHARP_TO_FLAT || analysisData.key in FLAT_TO_SHARP;
+      let toggleHtml = "";
+      if (hasAlternative) {
+        const otherNotation = settings.keyNotation === "sharp" ? "flat" : "sharp";
+        const toggleLabel = settings.keyNotation === "sharp" ? "♭" : "♯";
+        toggleHtml = `<button class="key-toggle" id="key-toggle" title="Show in ${otherNotation} notation">${toggleLabel}</button>`;
+      }
+
       analysisSection.innerHTML = `
         <div class="analysis-results">
           <div class="analysis-item">
@@ -438,10 +474,20 @@
           <div class="analysis-divider"></div>
           <div class="analysis-item">
             <span class="analysis-label">Key</span>
-            <span class="analysis-value key">${analysisData.key} ${analysisData.scale}</span>
+            <span class="analysis-value key">${displayKey} ${analysisData.scale}</span>
             ${analysisData.keyStrength > 0 ? `<span class="analysis-confidence">${Math.round(analysisData.keyStrength * 100)}%</span>` : ""}
           </div>
+          ${toggleHtml}
         </div>`;
+
+      if (hasAlternative) {
+        const otherNotation = settings.keyNotation === "sharp" ? "flat" : "sharp";
+        $("#key-toggle").addEventListener("click", () => {
+          settings.keyNotation = otherNotation;
+          saveSettings();
+          renderAnalysis();
+        });
+      }
       return;
     }
 
@@ -470,7 +516,7 @@
     const best = getBestFormat();
     if (!best) return;
     const isAudio = currentMode === "audio";
-    startDownload(best.formatId, isAudio ? "mp3" : undefined);
+    startDownload(best.formatId, isAudio ? settings.defaultAudioFormat : undefined);
   });
 
   toggleOptions.addEventListener("click", () => {
@@ -496,8 +542,25 @@
     updateUI();
   });
 
+  audioFormatSelect.addEventListener("change", () => {
+    settings.defaultAudioFormat = audioFormatSelect.value;
+    saveSettings();
+    renderFormats();
+    updateSmartButton();
+  });
+
   async function init() {
+    await loadSettings();
+    audioFormatSelect.value = settings.defaultAudioFormat;
+
     await checkServer();
+
+    try {
+      const status = await chrome.runtime.sendMessage({ type: "getDownloadStatus" });
+      if (status && status.active) {
+        restoreDownloadState(status);
+      }
+    } catch {}
 
     const [tab] = await chrome.tabs.query({ active: true, currentWindow: true });
     if (!tab || !tab.url || !YOUTUBE_REGEX.test(tab.url)) {

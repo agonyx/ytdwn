@@ -39,8 +39,12 @@ export async function analyzeAudio(
     const bpmResult = essentia.RhythmExtractor2013(signal);
     const keyResult = essentia.KeyExtractor(signal);
 
+    let bpm = Math.round(bpmResult.bpm);
+    if (bpm < 80) bpm *= 2;
+    else if (bpm > 200) bpm = Math.round(bpm / 2);
+
     const result: AudioAnalysis = {
-      bpm: Math.round(bpmResult.bpm * 10) / 10,
+      bpm,
       bpmConfidence: Math.round(bpmResult.confidence * 100) / 100,
       key: keyResult.key,
       scale: keyResult.scale,

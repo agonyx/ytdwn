@@ -170,6 +170,38 @@ body {
   margin-bottom: 8px;
 }
 
+.audio-format-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 8px;
+  padding: 5px 10px;
+  background: rgba(255, 255, 255, 0.02);
+  border: 1px solid rgba(255, 255, 255, 0.05);
+  border-radius: 8px;
+}
+
+.audio-format-label {
+  font-size: 0.7rem;
+  color: #666;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.audio-format-select {
+  flex: 1;
+  padding: 3px 8px;
+  background: rgba(255, 255, 255, 0.04);
+  color: #c0c0c0;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 5px;
+  font-size: 0.75rem;
+  font-weight: 600;
+  cursor: pointer;
+  outline: none;
+}
+
 .analysis-section {
   margin-bottom: 8px;
 }
@@ -224,6 +256,25 @@ body {
   width: 1px;
   height: 32px;
   background: rgba(255, 255, 255, 0.06);
+}
+
+.key-toggle {
+  background: rgba(255, 255, 255, 0.04);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  color: #555;
+  font-size: 0.75rem;
+  font-weight: 700;
+  padding: 3px 7px;
+  border-radius: 5px;
+  cursor: pointer;
+  transition: all 0.2s;
+  line-height: 1;
+}
+
+.key-toggle:hover {
+  background: rgba(255, 255, 255, 0.08);
+  color: #999;
+  border-color: rgba(255, 255, 255, 0.15);
 }
 
 .analyze-btn {
