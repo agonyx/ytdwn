@@ -1,5 +1,5 @@
 const SERVER = "https://ytdwn.vanity.pw";
-const MAX_HISTORY = 50;
+const DEFAULT_MAX_HISTORY = 50;
 
 let downloadState = {
   active: false,
@@ -124,6 +124,8 @@ async function startBackgroundDownload({ videoUrl, formatId, audioFormat, meta }
 async function saveToHistory(meta, filename) {
   if (!meta) return;
   try {
+    const storedSync = await chrome.storage.sync.get("settings");
+    const maxHistory = storedSync.settings?.historyCount || DEFAULT_MAX_HISTORY;
     const stored = await chrome.storage.local.get("history");
     const history = stored.history || [];
     history.unshift({
@@ -134,7 +136,7 @@ async function saveToHistory(meta, filename) {
       filename,
       timestamp: Date.now(),
     });
-    await chrome.storage.local.set({ history: history.slice(0, MAX_HISTORY) });
+    await chrome.storage.local.set({ history: history.slice(0, maxHistory) });
   } catch {}
 }
 

@@ -24,6 +24,8 @@
   const DEFAULT_SETTINGS = {
     defaultAudioFormat: "mp3",
     keyNotation: "sharp",
+    autoAnalyze: false,
+    historyCount: 50,
   };
 
   const statusBar = $("#status-bar");
@@ -52,6 +54,10 @@
   const historySection = $("#history-section");
   const historyList = $("#history-list");
   const clearHistoryBtn = $("#clear-history-btn");
+  const settingsBtn = $("#settings-btn");
+  const settingsPanel = $("#settings-panel");
+  const settingsClose = $("#settings-close");
+  const autoAnalyzeToggle = $("#auto-analyze-toggle");
 
   let videoUrl = null;
   let videoData = null;
@@ -325,6 +331,10 @@
       analysisData = null;
       updateUI();
       renderAnalysis();
+
+      if (settings.autoAnalyze) {
+        analyzeBtn.click();
+      }
     } catch (err) {
       hide(loadingSection);
       errorMsg.textContent = err.message;
@@ -610,6 +620,25 @@
     renderHistory([]);
   });
 
+  function updateSettingsUI() {
+    autoAnalyzeToggle.classList.toggle("active", !!settings.autoAnalyze);
+  }
+
+  settingsBtn.addEventListener("click", () => {
+    updateSettingsUI();
+    show(settingsPanel);
+  });
+
+  settingsClose.addEventListener("click", () => {
+    hide(settingsPanel);
+  });
+
+  autoAnalyzeToggle.addEventListener("click", () => {
+    settings.autoAnalyze = !settings.autoAnalyze;
+    saveSettings();
+    updateSettingsUI();
+  });
+
   async function init() {
     await loadSettings();
     audioFormatSelect.value = settings.defaultAudioFormat;
@@ -626,6 +655,7 @@
     const [tab] = await chrome.tabs.query({ active: true, currentWindow: true });
     if (!tab || !tab.url || !YOUTUBE_REGEX.test(tab.url)) {
       show(noYoutube);
+      loadHistory();
       return;
     }
 
