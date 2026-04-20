@@ -268,7 +268,7 @@ export default function App() {
     } finally {
       setDownloading(null);
     }
-  }, [videoUrl]);
+  }, [videoUrl, videoData, settings]);
 
   return (
     <div className="app">
