@@ -1,21 +1,22 @@
-import { useState, useCallback, useEffect } from "react";
+import { useState, useCallback, useEffect, useRef } from "react";
 import UrlInput from "./components/UrlInput";
 import VideoInfo from "./components/VideoInfo";
+import Settings, { loadSettings, saveSettings } from "./components/Settings";
 
 const HISTORY_KEY = "ytdwn_history";
-const MAX_HISTORY = 50;
 
-function loadHistory() {
+function loadHistory(maxCount) {
   try {
-    return JSON.parse(localStorage.getItem(HISTORY_KEY)) || [];
+    const items = JSON.parse(localStorage.getItem(HISTORY_KEY)) || [];
+    return items.slice(0, maxCount);
   } catch {}
   return [];
 }
 
-function saveToHistory(entry) {
-  const history = loadHistory();
+function saveToHistory(entry, maxCount) {
+  const history = loadHistory(maxCount);
   history.unshift(entry);
-  localStorage.setItem(HISTORY_KEY, JSON.stringify(history.slice(0, MAX_HISTORY)));
+  localStorage.setItem(HISTORY_KEY, JSON.stringify(history.slice(0, maxCount)));
 }
 
 function clearAllHistory() {
@@ -46,7 +47,10 @@ export default function App() {
   const [analysis, setAnalysis] = useState(null);
   const [analyzing, setAnalyzing] = useState(false);
   const [analysisProgress, setAnalysisProgress] = useState(null);
-  const [history, setHistory] = useState(loadHistory);
+  const [settings, setSettings] = useState(loadSettings);
+  const [showSettings, setShowSettings] = useState(false);
+  const [history, setHistory] = useState(() => loadHistory(loadSettings().historyCount));
+  const analyzeCalledRef = useRef(false);
 
   useEffect(() => {
     const handleHash = () => {
@@ -66,6 +70,12 @@ export default function App() {
     handleHash();
     window.addEventListener("hashchange", handleHash);
     return () => window.removeEventListener("hashchange", handleHash);
+  }, []);
+
+  const handleSettingsChange = useCallback((next) => {
+    setSettings(next);
+    saveSettings(next);
+    setHistory(loadHistory(next.historyCount));
   }, []);
 
   const fetchInfo = async (url) => {
@@ -88,6 +98,11 @@ export default function App() {
       }
 
       setVideoData(data);
+
+      if (settings.autoAnalyze) {
+        analyzeCalledRef.current = false;
+        triggerAnalyze(url);
+      }
     } catch (err) {
       setError(err.message);
     } finally {
@@ -110,8 +125,8 @@ export default function App() {
     setResetKey((k) => k + 1);
   }, []);
 
-  const analyze = useCallback(async () => {
-    if (!videoUrl) return;
+  const triggerAnalyze = useCallback(async (url) => {
+    if (!url) return;
     setAnalyzing(true);
     setAnalysis(null);
     setAnalysisProgress(null);
@@ -120,7 +135,7 @@ export default function App() {
       const res = await fetch("/api/analyze", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ url: videoUrl }),
+        body: JSON.stringify({ url }),
       });
 
       const reader = res.body.getReader();
@@ -168,7 +183,11 @@ export default function App() {
     } finally {
       setAnalyzing(false);
     }
-  }, [videoUrl]);
+  }, []);
+
+  const analyze = useCallback(() => {
+    triggerAnalyze(videoUrl);
+  }, [videoUrl, triggerAnalyze]);
 
   const download = useCallback(async (formatId, audioFormat) => {
     setDownloading(formatId);
@@ -241,8 +260,8 @@ export default function App() {
           format: isAudio ? audioFormat.toUpperCase() : "Video",
           filename,
           timestamp: Date.now(),
-        });
-        setHistory(loadHistory());
+        }, settings.historyCount);
+        setHistory(loadHistory(settings.historyCount));
       }
     } catch (err) {
       alert(err.message);
@@ -254,9 +273,24 @@ export default function App() {
   return (
     <div className="app">
       <header className="header">
-        <h1>YTDWN</h1>
+        <div className="header-row">
+          <h1>YTDWN</h1>
+          <button className="settings-btn" onClick={() => setShowSettings(true)} title="Settings">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+              <circle cx="12" cy="12" r="3" />
+              <path d="M19.4 15a1.65 1.65 0 00.33 1.82l.06.06a2 2 0 010 2.83 2 2 0 01-2.83 0l-.06-.06a1.65 1.65 0 00-1.82-.33 1.65 1.65 0 00-1 1.51V21a2 2 0 01-4 0v-.09A1.65 1.65 0 009 19.4a1.65 1.65 0 00-1.82.33l-.06.06a2 2 0 01-2.83-2.83l.06-.06A1.65 1.65 0 004.68 15a1.65 1.65 0 00-1.51-1H3a2 2 0 010-4h.09A1.65 1.65 0 004.6 9a1.65 1.65 0 00-.33-1.82l-.06-.06a2 2 0 012.83-2.83l.06.06A1.65 1.65 0 009 4.68a1.65 1.65 0 001-1.51V3a2 2 0 014 0v.09a1.65 1.65 0 001 1.51 1.65 1.65 0 001.82-.33l.06-.06a2 2 0 012.83 2.83l-.06.06A1.65 1.65 0 0019.4 9a1.65 1.65 0 001.51 1H21a2 2 0 010 4h-.09a1.65 1.65 0 00-1.51 1z" />
+            </svg>
+          </button>
+        </div>
         <p>YouTube Video Downloader</p>
       </header>
+
+      <Settings
+        settings={settings}
+        onChange={handleSettingsChange}
+        open={showSettings}
+        onClose={() => setShowSettings(false)}
+      />
 
       <UrlInput onSubmit={fetchInfo} loading={loading} key={resetKey} />
 
