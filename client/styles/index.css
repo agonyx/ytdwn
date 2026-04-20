@@ -935,6 +935,97 @@ body::after {
   background: rgba(255, 255, 255, 0.03);
 }
 
+.history-section {
+  margin-top: 2.5rem;
+  animation: fadeUp 0.5s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.history-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 0.75rem;
+}
+
+.history-title {
+  font-size: 0.75rem;
+  font-weight: 700;
+  color: #555;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+}
+
+.clear-history-btn {
+  background: none;
+  border: none;
+  color: #444;
+  font-size: 0.7rem;
+  cursor: pointer;
+  padding: 0.25rem 0.6rem;
+  border-radius: 5px;
+  transition: all 0.2s;
+}
+
+.clear-history-btn:hover {
+  color: #ff6b7a;
+  background: rgba(255, 26, 61, 0.06);
+}
+
+.history-list {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.history-item {
+  display: flex;
+  align-items: center;
+  gap: 0.85rem;
+  padding: 0.7rem 0.85rem;
+  background: rgba(255, 255, 255, 0.02);
+  border: 1px solid rgba(255, 255, 255, 0.04);
+  border-radius: 10px;
+  cursor: pointer;
+  transition: all 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.history-item:hover {
+  background: rgba(255, 255, 255, 0.04);
+  border-color: rgba(255, 255, 255, 0.08);
+  transform: translateX(2px);
+}
+
+.history-thumb {
+  width: 64px;
+  height: 36px;
+  object-fit: cover;
+  border-radius: 6px;
+  flex-shrink: 0;
+  background: #1a1a1a;
+}
+
+.history-info {
+  display: flex;
+  flex-direction: column;
+  gap: 0.2rem;
+  min-width: 0;
+  flex: 1;
+}
+
+.history-item-title {
+  font-size: 0.85rem;
+  font-weight: 600;
+  color: #bbb;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.history-meta {
+  font-size: 0.7rem;
+  color: #444;
+}
+
 @media (max-width: 600px) {
   .app {
     padding: 2rem 1rem;

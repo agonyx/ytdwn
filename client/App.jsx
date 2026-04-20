@@ -2,6 +2,38 @@ import { useState, useCallback, useEffect } from "react";
 import UrlInput from "./components/UrlInput";
 import VideoInfo from "./components/VideoInfo";
 
+const HISTORY_KEY = "ytdwn_history";
+const MAX_HISTORY = 50;
+
+function loadHistory() {
+  try {
+    return JSON.parse(localStorage.getItem(HISTORY_KEY)) || [];
+  } catch {}
+  return [];
+}
+
+function saveToHistory(entry) {
+  const history = loadHistory();
+  history.unshift(entry);
+  localStorage.setItem(HISTORY_KEY, JSON.stringify(history.slice(0, MAX_HISTORY)));
+}
+
+function clearAllHistory() {
+  localStorage.removeItem(HISTORY_KEY);
+}
+
+function formatTimeAgo(ts) {
+  const diff = Date.now() - ts;
+  const mins = Math.floor(diff / 60000);
+  if (mins < 1) return "just now";
+  if (mins < 60) return `${mins}m ago`;
+  const hours = Math.floor(mins / 60);
+  if (hours < 24) return `${hours}h ago`;
+  const days = Math.floor(hours / 24);
+  if (days < 7) return `${days}d ago`;
+  return new Date(ts).toLocaleDateString();
+}
+
 export default function App() {
   const [videoUrl, setVideoUrl] = useState(null);
   const [videoData, setVideoData] = useState(null);
@@ -14,6 +46,7 @@ export default function App() {
   const [analysis, setAnalysis] = useState(null);
   const [analyzing, setAnalyzing] = useState(false);
   const [analysisProgress, setAnalysisProgress] = useState(null);
+  const [history, setHistory] = useState(loadHistory);
 
   useEffect(() => {
     const handleHash = () => {
@@ -199,6 +232,17 @@ export default function App() {
 
         setProgress({ percent: 100, speed: filename });
         setDownloadDone(formatId);
+
+        const isAudio = !!audioFormat;
+        saveToHistory({
+          title: videoData.title,
+          thumbnail: videoData.thumbnail,
+          url: videoUrl,
+          format: isAudio ? audioFormat.toUpperCase() : "Video",
+          filename,
+          timestamp: Date.now(),
+        });
+        setHistory(loadHistory());
       }
     } catch (err) {
       alert(err.message);
@@ -232,6 +276,31 @@ export default function App() {
           analysisProgress={analysisProgress}
           onAnalyze={analyze}
         />
+      )}
+
+      {!videoData && !loading && history.length > 0 && (
+        <div className="history-section">
+          <div className="history-header">
+            <span className="history-title">History</span>
+            <button
+              className="clear-history-btn"
+              onClick={() => { clearAllHistory(); setHistory([]); }}
+            >
+              Clear
+            </button>
+          </div>
+          <div className="history-list">
+            {history.map((item, i) => (
+              <div key={i} className="history-item" onClick={() => fetchInfo(item.url)}>
+                <img className="history-thumb" src={item.thumbnail} alt="" />
+                <div className="history-info">
+                  <span className="history-item-title">{item.title}</span>
+                  <span className="history-meta">{item.format} · {formatTimeAgo(item.timestamp)}</span>
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
       )}
     </div>
   );

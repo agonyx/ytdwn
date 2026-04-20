@@ -49,6 +49,9 @@
   const analyzeBtn = $("#analyze-btn");
   const audioFormatRow = $("#audio-format-row");
   const audioFormatSelect = $("#audio-format-select");
+  const historySection = $("#history-section");
+  const historyList = $("#history-list");
+  const clearHistoryBtn = $("#clear-history-btn");
 
   let videoUrl = null;
   let videoData = null;
@@ -346,6 +349,14 @@
       videoUrl,
       formatId,
       audioFormat,
+      meta: {
+        title: videoData.title,
+        videoId: extractVideoId(videoUrl),
+        url: videoUrl,
+        format: audioFormat
+          ? audioFormat.toUpperCase()
+          : (getBestFormat()?.height ? `${getBestFormat().height}p` : "video"),
+      },
     });
   }
 
@@ -377,6 +388,7 @@
       smartBtnSize.textContent = "";
       downloading = false;
       smartBtn.disabled = false;
+      loadHistory();
     }
     if (msg.type === "downloadError") {
       smartBtnLabel.textContent = "Failed";
@@ -549,6 +561,55 @@
     updateSmartButton();
   });
 
+  function formatTimeAgo(ts) {
+    const diff = Date.now() - ts;
+    const mins = Math.floor(diff / 60000);
+    if (mins < 1) return "just now";
+    if (mins < 60) return `${mins}m ago`;
+    const hours = Math.floor(mins / 60);
+    if (hours < 24) return `${hours}h ago`;
+    const days = Math.floor(hours / 24);
+    if (days < 7) return `${days}d ago`;
+    return new Date(ts).toLocaleDateString();
+  }
+
+  async function loadHistory() {
+    try {
+      const history = await chrome.runtime.sendMessage({ type: "getHistory" });
+      renderHistory(history || []);
+    } catch {}
+  }
+
+  function renderHistory(history) {
+    if (!history || history.length === 0) {
+      hide(historySection);
+      return;
+    }
+
+    show(historySection);
+    historyList.innerHTML = "";
+
+    history.forEach((item) => {
+      const row = document.createElement("div");
+      row.className = "history-item";
+      row.innerHTML = `
+        <img class="history-thumb" src="https://img.youtube.com/vi/${item.videoId}/default.jpg" alt="">
+        <div class="history-info">
+          <span class="history-item-title">${item.title}</span>
+          <span class="history-meta">${item.format} · ${formatTimeAgo(item.timestamp)}</span>
+        </div>`;
+      row.addEventListener("click", () => {
+        chrome.tabs.create({ url: item.url });
+      });
+      historyList.appendChild(row);
+    });
+  }
+
+  clearHistoryBtn.addEventListener("click", async () => {
+    await chrome.runtime.sendMessage({ type: "clearHistory" });
+    renderHistory([]);
+  });
+
   async function init() {
     await loadSettings();
     audioFormatSelect.value = settings.defaultAudioFormat;
@@ -570,6 +631,8 @@
 
     videoUrl = tab.url;
     fetchInfo(videoUrl);
+
+    loadHistory();
   }
 
   init();

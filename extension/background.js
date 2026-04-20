@@ -1,4 +1,5 @@
 const SERVER = "https://ytdwn.vanity.pw";
+const MAX_HISTORY = 50;
 
 let downloadState = {
   active: false,
@@ -7,13 +8,14 @@ let downloadState = {
   filename: null,
   error: null,
   done: false,
+  meta: null,
 };
 
 function broadcast(msg) {
   chrome.runtime.sendMessage(msg).catch(() => {});
 }
 
-async function startBackgroundDownload({ videoUrl, formatId, audioFormat }) {
+async function startBackgroundDownload({ videoUrl, formatId, audioFormat, meta }) {
   downloadState = {
     active: true,
     percent: 0,
@@ -21,6 +23,7 @@ async function startBackgroundDownload({ videoUrl, formatId, audioFormat }) {
     filename: null,
     error: null,
     done: false,
+    meta: meta || null,
   };
 
   try {
@@ -104,6 +107,8 @@ async function startBackgroundDownload({ videoUrl, formatId, audioFormat }) {
         type: "downloadDone",
         filename: downloadState.filename,
       });
+
+      saveToHistory(downloadState.meta, downloadState.filename);
     } else if (!downloadState.error) {
       downloadState.error = "No filename received";
       downloadState.active = false;
@@ -116,6 +121,37 @@ async function startBackgroundDownload({ videoUrl, formatId, audioFormat }) {
   }
 }
 
+async function saveToHistory(meta, filename) {
+  if (!meta) return;
+  try {
+    const stored = await chrome.storage.local.get("history");
+    const history = stored.history || [];
+    history.unshift({
+      title: meta.title,
+      videoId: meta.videoId,
+      url: meta.url,
+      format: meta.format,
+      filename,
+      timestamp: Date.now(),
+    });
+    await chrome.storage.local.set({ history: history.slice(0, MAX_HISTORY) });
+  } catch {}
+}
+
+async function getHistory() {
+  try {
+    const stored = await chrome.storage.local.get("history");
+    return stored.history || [];
+  } catch {}
+  return [];
+}
+
+async function clearHistory() {
+  try {
+    await chrome.storage.local.remove("history");
+  } catch {}
+}
+
 chrome.runtime.onMessage.addListener((msg, sender, sendResponse) => {
   if (msg.type === "startDownload") {
     startBackgroundDownload(msg);
@@ -125,6 +161,14 @@ chrome.runtime.onMessage.addListener((msg, sender, sendResponse) => {
   if (msg.type === "getDownloadStatus") {
     sendResponse(downloadState);
     return;
+  }
+  if (msg.type === "getHistory") {
+    getHistory().then(sendResponse);
+    return true;
+  }
+  if (msg.type === "clearHistory") {
+    clearHistory().then(() => sendResponse({ done: true }));
+    return true;
   }
   if (msg.type === "download") {
     chrome.downloads.download({
