@@ -270,7 +270,7 @@
       hide(audioFormatRow);
     }
 
-    if (!downloading && !analyzing) {
+    if (!downloading || (analysisData && !analysisData.error)) {
       show(analysisSection);
     } else {
       hide(analysisSection);
