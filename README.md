@@ -48,7 +48,7 @@ The app runs on port 3000.
 
 ## Browser Extension
 
-The extension adds a "Download" button directly on YouTube video pages and provides a popup to quickly download the current video.
+The extension popup detects the current YouTube video and lets you download it directly without leaving the page.
 
 ### Download
 
