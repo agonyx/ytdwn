@@ -1,0 +1,16 @@
+services:
+  ytdwn:
+    build: .
+    container_name: ytdwn
+    restart: unless-stopped
+    ports:
+      - "3000:3000"
+    volumes:
+      - ./downloads:/app/downloads
+      - ./analysis:/app/analysis
+    networks:
+      - tunnel-net
+
+networks:
+  tunnel-net:
+    external: true
