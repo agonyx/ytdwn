@@ -50,27 +50,27 @@ export default function VideoInfo({ video, onDownload, onReset, downloading, pro
         </div>
       </div>
 
-      {!downloading && !downloadDone && (
-        <div className="analysis-section">
-          {analysis && !analysis.error ? (
-            <div className="analysis-results">
-              <div className="analysis-item">
-                <span className="analysis-label">BPM</span>
-                <span className="analysis-value bpm">{analysis.bpm}</span>
-                {analysis.bpmConfidence > 0 && (
-                  <span className="analysis-confidence">{Math.round(analysis.bpmConfidence * 100)}%</span>
-                )}
-              </div>
-              <div className="analysis-divider" />
-              <div className="analysis-item">
-                <span className="analysis-label">Key</span>
-                <span className="analysis-value key">{analysis.key} {analysis.scale}</span>
-                {analysis.keyStrength > 0 && (
-                  <span className="analysis-confidence">{Math.round(analysis.keyStrength * 100)}%</span>
-                )}
-              </div>
+      <div className="analysis-section">
+        {analysis && !analysis.error ? (
+          <div className="analysis-results">
+            <div className="analysis-item">
+              <span className="analysis-label">BPM</span>
+              <span className="analysis-value bpm">{analysis.bpm}</span>
+              {analysis.bpmConfidence > 0 && (
+                <span className="analysis-confidence">{Math.round(analysis.bpmConfidence * 100)}%</span>
+              )}
             </div>
-          ) : analyzing ? (
+            <div className="analysis-divider" />
+            <div className="analysis-item">
+              <span className="analysis-label">Key</span>
+              <span className="analysis-value key">{analysis.key} {analysis.scale}</span>
+              {analysis.keyStrength > 0 && (
+                <span className="analysis-confidence">{Math.round(analysis.keyStrength * 100)}%</span>
+              )}
+            </div>
+          </div>
+        ) : !downloading && !downloadDone ? (
+          analyzing ? (
             <button className="analyze-btn analyzing" disabled>
               <span className="spinner" />
               {analysisProgress || "Analyzing..."}
@@ -89,9 +89,9 @@ export default function VideoInfo({ video, onDownload, onReset, downloading, pro
               </svg>
               Analyze BPM & Key
             </button>
-          )}
-        </div>
-      )}
+          )
+        ) : null}
+      </div>
 
       <div className="mode-toggle">
         <button
